@@ -11,11 +11,11 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Get API key from environment
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+import os
+os.environ['GROQ_API_KEY'] = '"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"'
 
 # Initialize Groq client
-groq_client = Groq(api_key=GROQ_API_KEY)
+groq_client = Groq(api_key=os.environ['GROQ_API_KEY'])
 
 class ClassificationEvaluator:
     """A class to evaluate multiple classification models with optional dataset reduction."""
