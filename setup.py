@@ -11,7 +11,7 @@ setup(
         "numpy",
         "scikit-learn",
         "lazypredict",
-        "groq",
+        "google-generativeai",
         "python-dotenv"
     ],
     python_requires=">=3.6"

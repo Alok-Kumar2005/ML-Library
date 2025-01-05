@@ -2,7 +2,7 @@ pandas>=1.0.0
 numpy>=1.19.0
 scikit-learn>=0.24.0
 lazypredict>=0.2.12
-groq>=0.3.0
+google-generativeai
 python-dotenv>=0.19.0
 typing-extensions>=4.0.0
 setuptools>=42.0.0

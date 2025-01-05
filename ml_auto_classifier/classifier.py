@@ -4,18 +4,12 @@ from lazypredict.Supervised import LazyClassifier
 from sklearn.model_selection import train_test_split
 from typing import Union, Dict
 import logging
-from groq import Groq
-import os
+import google.generativeai as genai
 from dotenv import load_dotenv
+import os
 
 # Load environment variables
 load_dotenv()
-
-import os
-os.environ['GROQ_API_KEY'] = "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"
-
-# Initialize Groq client
-groq_client = Groq(api_key=os.environ['GROQ_API_KEY'])
 
 class ClassificationEvaluator:
     """A class to evaluate multiple classification models with optional dataset reduction."""
@@ -30,6 +24,10 @@ class ClassificationEvaluator:
         self.random_state = random_state
         self.logger = self._setup_logger()
         self.results = None
+        
+        # Configure Gemini API
+        genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+        self.model = genai.GenerativeModel('gemini-pro')
         
     def _setup_logger(self) -> logging.Logger:
         """Set up logging configuration."""
@@ -117,7 +115,7 @@ class ClassificationEvaluator:
     
     def get_llm_analysis(self) -> str:
         """
-        Use Groq to analyze all model performances and provide recommendations.
+        Use Google's Gemini to analyze model performances and provide recommendations.
         
         Returns:
             str: LLM analysis of model performance
@@ -127,11 +125,10 @@ class ClassificationEvaluator:
         
         # Prepare complete model performance data for LLM
         performance_text = "Complete Model Performance Results:\n"
-        # Now self.results is a DataFrame, so we can use iterrows
         for idx, row in self.results.iterrows():
             performance_text += f"\nModel: {idx}\n"
             for metric, value in row.items():
-                if isinstance(value, (int, float)):  # Only format numeric values
+                if isinstance(value, (int, float)):
                     performance_text += f"{metric}: {value:.4f}\n"
                 else:
                     performance_text += f"{metric}: {value}\n"
@@ -148,19 +145,11 @@ Here are the model performance results:
 
 {performance_text}
 
-Provide the names of the top 5 models along with their key metrics, and at the end give the parameters of only first top performing model for Grid SearchCV."""
+Provide the names of the top 5 models along with their key metrics, and at the end give the parameters of only first top performing model for Grid SearchCV in proper format so that user can directly use it in code."""
 
         try:
-            completion = groq_client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": "You are an expert machine learning engineer providing comprehensive model analysis."},
-                    {"role": "user", "content": prompt}
-                ],
-                model="mixtral-8x7b-32768",
-                temperature=0.2,
-                max_tokens=1000
-            )
-            return completion.choices[0].message.content
+            response = self.model.generate_content(prompt)
+            return response.text
             
         except Exception as e:
             self.logger.error(f"Error getting LLM analysis: {str(e)}")
