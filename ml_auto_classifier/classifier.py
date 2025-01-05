@@ -5,14 +5,16 @@ from sklearn.model_selection import train_test_split
 from typing import Union, Dict
 import logging
 from groq import Groq
-
 import os
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
+# Get API key from environment
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 
+# Initialize Groq client
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 class ClassificationEvaluator:
@@ -97,7 +99,8 @@ class ClassificationEvaluator:
             
             # Initialize and fit lazy classifier
             clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
-            self.results = clf.fit(X_train, X_test, y_train, y_test)
+            models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+            self.results = models  
             
             return {
                 'dataset_info': {
@@ -124,10 +127,14 @@ class ClassificationEvaluator:
         
         # Prepare complete model performance data for LLM
         performance_text = "Complete Model Performance Results:\n"
+        # Now self.results is a DataFrame, so we can use iterrows
         for idx, row in self.results.iterrows():
             performance_text += f"\nModel: {idx}\n"
             for metric, value in row.items():
-                performance_text += f"{metric}: {value:.4f}\n"
+                if isinstance(value, (int, float)):  # Only format numeric values
+                    performance_text += f"{metric}: {value:.4f}\n"
+                else:
+                    performance_text += f"{metric}: {value}\n"
         
         prompt = f"""As an expert machine learning engineer, identify the top 5 best-performing models from the provided results. Prioritize models based on the following criteria:
 
@@ -141,7 +148,7 @@ Here are the model performance results:
 
 {performance_text}
 
-Provide the names of the top 5 models along with their key metrics."""
+Provide the names of the top 5 models along with their key metrics, and at the end give the parameters of only first top performing model for Grid SearchCV."""
 
         try:
             completion = groq_client.chat.completions.create(
@@ -151,7 +158,7 @@ Provide the names of the top 5 models along with their key metrics."""
                 ],
                 model="mixtral-8x7b-32768",
                 temperature=0.2,
-                max_tokens=1000  # Increased token limit for more detailed analysis
+                max_tokens=1000
             )
             return completion.choices[0].message.content
             

@@ -11,13 +11,13 @@ y = pd.Series(iris.target)
 evaluator = ClassificationEvaluator()
 
 # Evaluate models
-results = evaluator.evaluate_models(X, y, dataset_fraction=0.8)
+results = evaluator.evaluate_models(X, y, dataset_fraction=0.4)
 
 # Get AI analysis
 analysis = evaluator.get_llm_analysis()
 
 # Print results
-print("Model Results:")
-print(results['model_results'])
+# print("Model Results:")
+# print(results['model_results'])
 print("\nAI Analysis:")
 print(analysis)
