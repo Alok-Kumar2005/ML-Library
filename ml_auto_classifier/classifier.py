@@ -2,32 +2,29 @@ import pandas as pd
 import numpy as np
 from lazypredict.Supervised import LazyClassifier
 from sklearn.model_selection import train_test_split
-from typing import Union, Dict
+from typing import Union, Dict, Optional
 import logging
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
-load_dotenv()
-
 class ClassificationEvaluator:
     """A class to evaluate multiple classification models with optional dataset reduction."""
     
-    def __init__(self, random_state: int = 42):
+    def __init__(self, api_key: Optional[str] = None, random_state: int = 42):
         """
         Initialize the ClassificationEvaluator.
         
         Args:
+            api_key (Optional[str]): Google API key. If None, will try to get from environment variable
             random_state (int): Random seed for reproducibility
         """
         self.random_state = random_state
         self.logger = self._setup_logger()
         self.results = None
         
-        # Configure Gemini API
-        genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Configure Gemini API with flexible key handling
+        self._setup_api(api_key)
         
     def _setup_logger(self) -> logging.Logger:
         """Set up logging configuration."""
@@ -39,6 +36,42 @@ class ClassificationEvaluator:
             handler.setFormatter(formatter)
             logger.addHandler(handler)
         return logger
+        
+    def _setup_api(self, api_key: Optional[str] = None):
+        """
+        Set up the Gemini API with flexible key handling.
+        
+        Args:
+            api_key (Optional[str]): Google API key
+        """
+        try:
+            # Try loading from provided key first
+            if api_key:
+                genai.configure(api_key=api_key)
+            else:
+                # Try loading from environment
+                load_dotenv()  # This will load from .env file if present
+                env_key = os.getenv('GOOGLE_API_KEY')
+                if env_key:
+                    genai.configure(api_key=env_key)
+                else:
+                    self.logger.warning("No API key provided. LLM analysis will not be available.")
+                    return
+                
+            self.model = genai.GenerativeModel('gemini-pro')
+            
+        except Exception as e:
+            self.logger.error(f"Error setting up Gemini API: {str(e)}")
+            self.model = None
+
+    def set_api_key(self, api_key: str):
+        """
+        Set or update the API key.
+        
+        Args:
+            api_key (str): Google API key
+        """
+        self._setup_api(api_key)
     
     def _reduce_dataset(self, X: pd.DataFrame, y: pd.Series, reduction_percent: float) -> tuple:
         """
@@ -122,6 +155,9 @@ class ClassificationEvaluator:
         """
         if self.results is None:
             return "No models have been evaluated yet. Please run evaluate_models first."
+            
+        if self.model is None:
+            return "LLM analysis not available. Please set a valid API key using set_api_key() method."
         
         # Prepare complete model performance data for LLM
         performance_text = "Complete Model Performance Results:\n"
