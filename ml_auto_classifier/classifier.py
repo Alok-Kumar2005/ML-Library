@@ -181,7 +181,7 @@ Here are the model performance results:
 
 {performance_text}
 
-Provide the names of the top 5 models along with their key metrics, and at the end give the parameters of only first top performing model for Grid SearchCV in proper format so that user can directly use it in code."""
+Provide the names of the top 5 models along with their key metrics, and at the end give the parameters of only first top performing model for Grid SearchCV in proper format so that user can directly use it in code and if parameter not avilable then not need to write anything ."""
 
         try:
             response = self.model.generate_content(prompt)
