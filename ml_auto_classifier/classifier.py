@@ -175,7 +175,7 @@ class ClassificationEvaluator:
 2. F1-score
 3. Precision
 4. Recall
-5. Training/Prediction Time (lower is better in case of a tie)
+5. Training Time (lower is better in case of a tie)
 
 Here are the model performance results:
 
