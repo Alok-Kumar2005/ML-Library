@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-os.environ['GROQ_API_KEY'] = "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"
+os.environ['GROQ_API_KEY'] = "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"
 
 # Initialize Groq client
 groq_client = Groq(api_key=os.environ['GROQ_API_KEY'])
